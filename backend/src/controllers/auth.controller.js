@@ -3,13 +3,10 @@ import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateTokem.js";
 
 const options = {
-  maxAge: 1000 * 60 * 60 * 24,
-
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   httpOnly: true,
-
-  secure: true,
-
   sameSite: "strict",
+  secure: true,
 };
 
 export const register = async (req, res) => {
@@ -96,5 +93,27 @@ export const login = async (req, res) => {
     return res
       .status(500)
       .json({ message: `Server issue during login :  ${error}` });
+  }
+};
+
+export const logout = (req, res) => {
+  try {
+    res
+      .status(200)
+      .cookie("token", "", { maxAge: 0 })
+      .json({ message: "Logout Successfully.." });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server not working during logout " + error });
+  }
+};
+
+export const checkAuth = async (req, res) => {
+  try {
+    res.status(200).json(req.user);
+  } catch (error) {
+    console.log(("Error in checkAuth controller ", error.message));
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
