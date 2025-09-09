@@ -63,3 +63,38 @@ export const register = async (req, res) => {
       .json({ message: "Server not wokring for registeration " + error });
   }
 };
+
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    if (!email || !password) {
+      return res.status(400).json({ message: `Credentials not inserted...` });
+    }
+
+    const getUserQuery = `SELECT * FROM users WHERE email = $1 `;
+    const getUser = await pool.query(getUserQuery, [email]);
+
+    if (getUser.rows.length === 0) {
+      return res.status(401).json({ message: "You are not registered..." });
+    }
+
+    const user = getUser.rows[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid Credentials" });
+    }
+
+    delete user.password;
+    const token = generateToken(user.id);
+
+    return res
+      .status(200)
+      .cookie("token", token, options)
+      .json({ message: "Login Successfull..", user });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: `Server issue during login :  ${error}` });
+  }
+};
